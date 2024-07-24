@@ -28,6 +28,8 @@ namespace hashing {
 
 namespace {
 
+constexpr double pi{3.14159265358979323846};
+
 // ----------------------------------------------------------------
 // Christoph Zauner 'Implementation and Benchmarking of Perceptual
 // Image Hash Functions' 2010
@@ -48,7 +50,7 @@ auto const dct_matrix_64 = [] {
   for (size_t i = 0; i < num_rows; i++) {
     for (size_t j = 0; j < num_cols; j++) {
       dct_matrix[i * num_cols + j] = matrix_scale_factor *
-          std::cos((M_PI / 2.0 / double{num_cols}) * (i + 1) * (2 * j + 1));
+          std::cos((pi / 2.0 / double{num_cols}) * (i + 1) * (2 * j + 1));
     }
   }
 
