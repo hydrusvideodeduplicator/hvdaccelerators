@@ -18,11 +18,12 @@
 // end.
 // ================================================================
 
+#include <cstdint>
+
 namespace facebook {
 namespace pdq {
 namespace downscaling {
 
-using uint8_t = unsigned char;
 
 // ----------------------------------------------------------------
 // Matrix of RGB-triple unsigned chars -> matrix of floating-point luminance

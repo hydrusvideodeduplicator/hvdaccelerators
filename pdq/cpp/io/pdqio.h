@@ -8,12 +8,12 @@
 // ================================================================
 // CImg-dependent interface for reading files to matrices of RGB triples.
 // ================================================================
-
 #include <pdq/cpp/common/pdqhashtypes.h>
+
+#include <cstdint>
+
 #define cimg_display 0
 #include "CImg.h"
-
-typedef unsigned char uint8_t;
 
 namespace facebook {
 namespace pdq {
