@@ -14,8 +14,7 @@ log.setLevel(logging.WARNING)
 logging.basicConfig()
 
 
-class TestVpdq(unittest.TestCase):
-
+class TestSmokeTest(unittest.TestCase):
     def setUp(self):
         pass
 
