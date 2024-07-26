@@ -4,6 +4,7 @@
 set(PDQSOURCES
     cpp/common/pdqhashtypes.cpp
     cpp/hashing/pdqhashing.cpp
+    cpp/hashing/bufferhasher.cpp
     cpp/common/pdqhamming.cpp
     cpp/io/hashio.cpp
     cpp/downscaling/downscaling.cpp
@@ -15,6 +16,7 @@ set(PDQHEADERS
     cpp/common/pdqbasetypes.h
     cpp/common/pdqhamming.h
     cpp/hashing/pdqhashing.h
+    cpp/hashing/bufferhasher.h
     cpp/io/hashio.h
     cpp/downscaling/downscaling.h
     cpp/hashing/torben.h
