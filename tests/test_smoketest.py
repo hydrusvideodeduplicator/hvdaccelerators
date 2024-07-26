@@ -40,8 +40,13 @@ class TestSmokeTest(unittest.TestCase):
             im.thumbnail((512, 512))
             im.convert("RGB")
             result = stuff.hash_frame(im.tobytes(), im.width, im.height)
-            pdq_hash = str(result, encoding="utf-8")
-            self.assertEqual(pdq_hash, "1234")
+            (pdq_hash, quality) = result
+            pdq_hash = str(pdq_hash, encoding="utf-8")
+            self.assertEqual(quality, 100)
+            self.assertEqual(
+                pdq_hash,
+                "60f71d288ad588fd5722df82565df507a2fd0f2aa180a0ff5f8282d5a877750a",
+            )
             print(result)
 
 
