@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <vpdq/cpp/hashing/bufferhasher.h>
-#include <vpdq/cpp/hashing/ffmpegwrapper.h>
 #include <vpdq/cpp/hashing/vpdqHashType.h>
 
 namespace facebook {
@@ -261,7 +260,6 @@ void VpdqHasher<TFrame>::consumer() {
 
 // Explicit template instantiation for all frame types.
 template class VpdqHasher<GenericFrame>;
-template class VpdqHasher<ffmpeg::FFmpegFrame>;
 
 } // namespace hashing
 } // namespace vpdq

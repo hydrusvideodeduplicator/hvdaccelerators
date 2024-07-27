@@ -7,7 +7,7 @@ set(VPDQSOURCES
     # cpp/hashing/ffmpegutils.cpp
     # cpp/hashing/ffmpegwrapper.cpp
     cpp/hashing/matchTwoHash.cpp
-    cpp/io/vpdqio.cpp
+    # cpp/io/vpdqio.cpp
 )
 
 set(VPDQHEADERS
@@ -18,7 +18,7 @@ set(VPDQHEADERS
     cpp/hashing/hasher.h
     cpp/hashing/vpdqHashType.h
     cpp/hashing/matchTwoHash.h
-    cpp/io/vpdqio.h
+    # cpp/io/vpdqio.h
 )
 
 # Make an automatic library - will be static or dynamic based on user setting.

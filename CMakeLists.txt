@@ -22,5 +22,6 @@ add_subdirectory(vpdq)
 pybind11_add_module(stuff MODULE src/main.cpp)
 
 target_link_libraries(stuff PUBLIC pdqlib)
+target_link_libraries(stuff PUBLIC vpdqlib)
 
 install(TARGETS stuff DESTINATION ${SKBUILD_PROJECT_NAME})
