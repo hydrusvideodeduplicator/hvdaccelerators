@@ -5,3 +5,4 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "hvdaccelerators"
 version = "0.1.0"
+dependencies = ["pillow"] #todo: remove. this is only for the tests
