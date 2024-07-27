@@ -91,6 +91,8 @@ class VpdqHasher {
    **/
   std::vector<vpdqFeature> finish();
 
+  void stop();
+
   VpdqHasher() = delete;
   VpdqHasher(VpdqHasher const&) = delete;
   VpdqHasher& operator=(VpdqHasher const&) = delete;
@@ -255,6 +257,15 @@ void VpdqHasher<TFrame>::consumer() {
     m_queue.pop();
     lock.unlock();
     hasher(frame);
+  }
+}
+
+template <typename TFrame>
+void VpdqHasher<TFrame>::stop()
+{
+  m_queue_condition.notify_all();
+  for (auto& thread : consumer_threads) {
+    thread.join();
   }
 }
 
