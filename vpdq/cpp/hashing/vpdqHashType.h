@@ -21,6 +21,21 @@ struct vpdqFeature {
   {
       return pdqHash.format();
   }
+
+  int get_frame_number()
+  {
+      return frameNumber;
+  }
+
+  int get_quality()
+  {
+      return quality;
+  }
+
+  float get_timestamp()
+  {
+      return timeStamp;
+  }
 };
 
 } // namespace hashing
