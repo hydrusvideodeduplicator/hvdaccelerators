@@ -106,7 +106,7 @@ class VpdqHasher {
 
   /** @brief Collection of hashing threads.
    **/
-  std::vector<std::thread> consumer_threads;
+  std::vector<std::jthread> consumer_threads;
 
   /** @brief Condition variable to signal queue processing.
    **/
@@ -183,7 +183,7 @@ VpdqHasher<TFrame>::VpdqHasher(
     : m_done_hashing(false), m_video_metadata(video_metadata) {
   // Set thread count if specified
   if (thread_count == 0) {
-    thread_count = std::thread::hardware_concurrency();
+    thread_count = std::jthread::hardware_concurrency();
   }
 
   m_multithreaded = (thread_count != 1);
@@ -192,7 +192,7 @@ VpdqHasher<TFrame>::VpdqHasher(
   if (m_multithreaded) {
     consumer_threads.reserve(thread_count);
     for (size_t thread_idx{0}; thread_idx < thread_count; ++thread_idx) {
-      consumer_threads.emplace_back(std::thread(&VpdqHasher::consumer, this));
+      consumer_threads.emplace_back(std::jthread(&VpdqHasher::consumer, this));
     }
   }
 }
