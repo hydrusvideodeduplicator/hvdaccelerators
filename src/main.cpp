@@ -42,6 +42,35 @@ using facebook::vpdq::hashing::VideoMetadata;
 using facebook::vpdq::hashing::vpdqFeature;
 using facebook::vpdq::hashing::VpdqHasher;
 
+/** @brief String class for video frames. Stores pixels in its buffer which are
+ *         used by PDQ for hashing.
+ **/
+class StringVideoFrame {
+ public:
+  /** @brief Constructor
+   *
+   *  @param buffer The pixel buffer used for PDQ hashing
+   *  @param frameNumber The frame number in the video.
+   **/
+  StringVideoFrame(std::string buffer, uint64_t frameNumber)
+      : m_buffer(std::move(buffer)), m_frameNumber(frameNumber){};
+
+  /** @brief Get the frame number.
+   *
+   *  @return The frame number.
+   **/
+  uint64_t get_frame_number() const { return m_frameNumber; }
+
+  /** @brief Get the pointer to the frame data buffer to be used for hashing.
+   *
+   *  @return Pointer to the frame data buffer.
+   **/
+  unsigned char* get_buffer_ptr() { return reinterpret_cast<unsigned char*>(m_buffer.data()); }
+
+  std::string m_buffer;
+  uint64_t m_frameNumber;
+};
+
 class Hasher
 {
 public:
@@ -60,14 +89,7 @@ public:
         {
             // TODO: This will be ridiculously slow. Figure out how to use the raw bytes without copying.
             std::string img_str{img};
-            std::vector<uint8_t> buffer{};
-            buffer.reserve(img_str.size());
-            for (auto e : img_str)
-            {
-                buffer.push_back(e);
-            }
-            GenericFrame frame{
-                buffer, m_frame_num};
+            StringVideoFrame frame{img_str, m_frame_num};
             ++m_frame_num;
             return frame;
         };
@@ -87,7 +109,7 @@ public:
     }
 
 private:
-    VpdqHasher<GenericFrame> m_hasher;
+    VpdqHasher<StringVideoFrame> m_hasher;
     uint64_t m_frame_num{0U};
 };
 
