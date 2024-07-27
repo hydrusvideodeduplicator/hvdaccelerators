@@ -80,10 +80,6 @@ public:
         return m_hasher.finish();
     }
 
-    void stop()
-    {
-        m_hasher.stop();
-    }
 
     std::string go()
     {
@@ -99,7 +95,7 @@ PYBIND11_MODULE(stuff, m)
 {
     m.doc() = "hvdaccelerators plugin to make stuff fast";
 
-    py::class_<Hasher>(m, "Hasher").def(py::init<uint32_t, float, uint32_t, uint32_t>()).def(py::init<uint32_t, float, uint32_t>()).def("go", &Hasher::go).def("finish", &Hasher::finish).def("hash_frame", &Hasher::hash_frame).def("stop", &Hasher::stop);
+    py::class_<Hasher>(m, "Hasher").def(py::init<uint32_t, float, uint32_t, uint32_t>()).def(py::init<uint32_t, float, uint32_t>()).def("go", &Hasher::go).def("finish", &Hasher::finish).def("hash_frame", &Hasher::hash_frame);
 
     py::class_<facebook::vpdq::hashing::vpdqFeature>(m, "vpdqFeature").def(py::init<>()).def("get_hash", &vpdqFeature::get_hash).def("get_frame_number", &vpdqFeature::get_frame_number).def("get_quality", &vpdqFeature::get_quality).def("get_timestamp", &vpdqFeature::get_timestamp);
 

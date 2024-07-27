@@ -82,6 +82,12 @@ class VpdqHasher {
    **/
   void push_back(TFrame&& frame);
 
+  /** @brief Stop and join all hashing threads.
+   *
+   * @note Not thread safe.
+   **/
+  void stop_hashing();
+
   /** @brief Block until all frames are finished hashing and get the final
    *         result.
    *
@@ -91,13 +97,13 @@ class VpdqHasher {
    **/
   std::vector<vpdqFeature> finish();
 
-  void stop();
-
   VpdqHasher() = delete;
   VpdqHasher(VpdqHasher const&) = delete;
   VpdqHasher& operator=(VpdqHasher const&) = delete;
   VpdqHasher(VpdqHasher&&) = delete;
   VpdqHasher& operator=(VpdqHasher&&) = delete;
+
+  ~VpdqHasher() { stop_hashing(); }
 
  private:
   /** @brief True if hashing is multithreaded, false if singlethreaded.
@@ -106,7 +112,7 @@ class VpdqHasher {
 
   /** @brief Collection of hashing threads.
    **/
-  std::vector<std::jthread> consumer_threads;
+  std::vector<std::thread> consumer_threads;
 
   /** @brief Condition variable to signal queue processing.
    **/
@@ -183,7 +189,7 @@ VpdqHasher<TFrame>::VpdqHasher(
     : m_done_hashing(false), m_video_metadata(video_metadata) {
   // Set thread count if specified
   if (thread_count == 0) {
-    thread_count = std::jthread::hardware_concurrency();
+    thread_count = std::thread::hardware_concurrency();
   }
 
   m_multithreaded = (thread_count != 1);
@@ -192,7 +198,7 @@ VpdqHasher<TFrame>::VpdqHasher(
   if (m_multithreaded) {
     consumer_threads.reserve(thread_count);
     for (size_t thread_idx{0}; thread_idx < thread_count; ++thread_idx) {
-      consumer_threads.emplace_back(std::jthread(&VpdqHasher::consumer, this));
+      consumer_threads.emplace_back(std::thread(&VpdqHasher::consumer, this));
     }
   }
 }
@@ -211,10 +217,14 @@ void VpdqHasher<TFrame>::push_back(TFrame&& frame) {
 }
 
 template <typename TFrame>
-std::vector<vpdqFeature> VpdqHasher<TFrame>::finish() {
+void VpdqHasher<TFrame>::stop_hashing() {
   if (m_multithreaded) {
     {
       std::lock_guard<std::mutex> lock(m_queue_mutex);
+      if (m_done_hashing) {
+        return;
+      }
+
       m_done_hashing = true;
     }
 
@@ -223,6 +233,11 @@ std::vector<vpdqFeature> VpdqHasher<TFrame>::finish() {
       thread.join();
     }
   }
+}
+
+template <typename TFrame>
+std::vector<vpdqFeature> VpdqHasher<TFrame>::finish() {
+  this->stop_hashing();
 
   // Sort out of order frames by frame number
   std::sort(
@@ -259,18 +274,6 @@ void VpdqHasher<TFrame>::consumer() {
     hasher(frame);
   }
 }
-
-template <typename TFrame>
-void VpdqHasher<TFrame>::stop()
-{
-  m_queue_condition.notify_all();
-  for (auto& thread : consumer_threads) {
-    thread.join();
-  }
-}
-
-// Explicit template instantiation for all frame types.
-template class VpdqHasher<GenericFrame>;
 
 } // namespace hashing
 } // namespace vpdq
