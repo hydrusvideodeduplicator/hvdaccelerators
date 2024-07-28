@@ -88,8 +88,7 @@ public:
         auto make_frame = [this, &img]()
         {
             // TODO: This will be ridiculously slow. Figure out how to use the raw bytes without copying.
-            std::string img_str{img};
-            StringVideoFrame frame{img_str, m_frame_num};
+            StringVideoFrame frame{img, m_frame_num};
             ++m_frame_num;
             return frame;
         };
@@ -101,7 +100,6 @@ public:
     {
         return m_hasher.finish();
     }
-
 
     std::string go()
     {

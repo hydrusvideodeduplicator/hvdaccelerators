@@ -6,3 +6,7 @@ build-backend = "scikit_build_core.build"
 name = "hvdaccelerators"
 version = "0.1.0"
 dependencies = ["pillow"] #todo: remove. this is only for the tests
+
+[tool.scikit-build]
+cmake.build-type = "RelWithDebInfo" # HUGE performance boost vs Debug, as expected
+sdist.reproducible = true
