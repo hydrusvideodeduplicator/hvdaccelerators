@@ -118,6 +118,10 @@ class VpdqHasher {
    **/
   std::condition_variable m_queue_condition;
 
+  /** @brief Condition variable to signal that the queue is not full.
+   **/
+  std::condition_variable m_queue_not_full_condition;
+
   /** @brief Mutex for the hash queue. Must be taken before touching the queue.
    **/
   std::mutex m_queue_mutex;
@@ -152,6 +156,16 @@ class VpdqHasher {
    *         queue.
    **/
   void consumer();
+
+  /** @brief Check if the queue is full.
+   *
+   * @return If the queue is full or not.
+   *
+   * @note Not thread safe.
+   * 
+   * @note Only applicable for multithreaded. DO NOT CALL if singlethreaded.
+   **/
+  bool is_queue_full();
 };
 
 /** @brief Hash a frame using PDQ.
@@ -207,7 +221,12 @@ template <typename TFrame>
 void VpdqHasher<TFrame>::push_back(TFrame&& frame) {
   if (m_multithreaded) {
     {
-      std::lock_guard<std::mutex> lock(m_queue_mutex);
+      std::unique_lock<std::mutex> lock(m_queue_mutex);
+      m_queue_not_full_condition.wait(
+          lock, [this] { return is_queue_full() || m_done_hashing; });
+      if (m_done_hashing) {
+        return;
+      }
       m_queue.push(std::move(frame));
       m_queue_condition.notify_one();
     }
@@ -270,9 +289,22 @@ void VpdqHasher<TFrame>::consumer() {
     }
     auto frame = std::move(m_queue.front());
     m_queue.pop();
+    m_queue_not_full_condition.notify_one();
     lock.unlock();
     hasher(frame);
   }
+}
+
+template <typename TFrame>
+bool VpdqHasher<TFrame>::is_queue_full()
+{
+  // This doesn't have to be an exact number. We just want the 
+  // threads to always be working, plus a little extra in the queue
+  // to avoid waiting on decoding.
+  // The only reason we have a limited size queue is to avoid huge memory
+  // usage for large videos where the consumers (hashers) can't keep up with the producer (video decoder).
+  // You can assume each queue entry is about 1 Mb and adjust from there.
+  return m_queue.size() < (consumer_threads.size() * 2 /*a little extra*/);
 }
 
 } // namespace hashing

@@ -5,9 +5,8 @@ import unittest
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image
-
 from hvdaccelerators import stuff
+from PIL import Image
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.WARNING)
@@ -48,22 +47,27 @@ class TestSmokeTest(unittest.TestCase):
             # print(result)
 
     def test_hasher(self):
-        with open(Path(__file__).parent / "test.png", "rb") as f:
-            data = f.read()
-            im = Image.open(BytesIO(data))
-            im.thumbnail((512, 512))
-            im.convert("RGB")
+        # Run multiple times to try and catch any concurrency issues.
+        for _ in range(10):
+            with open(Path(__file__).parent / "test.png", "rb") as f:
+                data = f.read()
+                im = Image.open(BytesIO(data))
+                im.thumbnail((512, 512))
+                im.convert("RGB")
 
-            log.error("Start")
-            hasher = stuff.Hasher(60, im.width, im.height)
-            for i in range(10):
-                hasher.hash_frame(im.tobytes())
-            log.error("Done")
-            result = hasher.finish()
-            self.assertEqual(
-                result[1].get_hash(),
-                "c495c53700955a3d86c257c2cddbd3ea5be02547e697a5ead2951a9702b5861f",
-            )
+                log.error("Start")
+                thread_count = 0  # auto
+                hasher = stuff.Hasher(60, im.width, im.height, thread_count)
+                # Hash a bunch of frames, simulating a video.
+                for _ in range(100):
+                    hasher.hash_frame(im.tobytes())
+                log.error("Done")
+                result = hasher.finish()
+                for frame in result:
+                    self.assertEqual(
+                        frame.get_hash(),
+                        "c495c53700955a3d86c257c2cddbd3ea5be02547e697a5ead2951a9702b5861f",
+                    )
 
 
 if __name__ == "__main__":
