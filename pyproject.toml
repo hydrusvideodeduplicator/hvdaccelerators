@@ -5,8 +5,18 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "hvdaccelerators"
 version = "0.1.0"
-dependencies = ["pillow"] #todo: remove. this is only for the tests
 
 [tool.scikit-build]
 cmake.build-type = "RelWithDebInfo" # HUGE performance boost vs Debug, as expected
 sdist.reproducible = true
+
+# Test environment
+
+[tool.hatch.envs.test]
+dependencies = [
+    "pytest",
+    "pillow",
+]
+
+[tool.hatch.envs.test.scripts]
+all = "python -m pytest tests/test_smoketest.py --verbose {args}"
