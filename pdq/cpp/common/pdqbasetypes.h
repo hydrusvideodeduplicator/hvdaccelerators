@@ -13,6 +13,7 @@ namespace hashing {
 
 using Hash8 = std::uint8_t;
 using Hash16 = std::uint16_t;
+using Hash64 = std::uint64_t;
 
 } // namespace hashing
 } // namespace pdq
