@@ -33,7 +33,6 @@ std::tuple<py::bytes, int> hash_frame(py::bytes &img, size_t width, size_t heigh
     std::string img_str{img};
     int quality{};
     hasher->hashFrame(reinterpret_cast<unsigned char *>(img_str.data()), result, quality);
-    facebook::vpdq::hashing::vpdqFeature{};
     return std::make_tuple(result.format(), quality);
 }
 
@@ -45,30 +44,31 @@ using facebook::vpdq::hashing::VpdqHasher;
 /** @brief String class for video frames. Stores pixels in its buffer which are
  *         used by PDQ for hashing.
  **/
-class StringVideoFrame {
- public:
-  /** @brief Constructor
-   *
-   *  @param buffer The pixel buffer used for PDQ hashing
-   *  @param frameNumber The frame number in the video.
-   **/
-  StringVideoFrame(std::string buffer, uint64_t frameNumber)
-      : m_buffer(std::move(buffer)), m_frameNumber(frameNumber){};
+class StringVideoFrame
+{
+public:
+    /** @brief Constructor
+     *
+     *  @param buffer The pixel buffer used for PDQ hashing
+     *  @param frameNumber The frame number in the video.
+     **/
+    StringVideoFrame(std::string buffer, uint64_t frameNumber)
+        : m_buffer(std::move(buffer)), m_frameNumber(frameNumber) {};
 
-  /** @brief Get the frame number.
-   *
-   *  @return The frame number.
-   **/
-  uint64_t get_frame_number() const { return m_frameNumber; }
+    /** @brief Get the frame number.
+     *
+     *  @return The frame number.
+     **/
+    uint64_t get_frame_number() const { return m_frameNumber; }
 
-  /** @brief Get the pointer to the frame data buffer to be used for hashing.
-   *
-   *  @return Pointer to the frame data buffer.
-   **/
-  unsigned char* get_buffer_ptr() { return reinterpret_cast<unsigned char*>(m_buffer.data()); }
+    /** @brief Get the pointer to the frame data buffer to be used for hashing.
+     *
+     *  @return Pointer to the frame data buffer.
+     **/
+    unsigned char *get_buffer_ptr() { return reinterpret_cast<unsigned char *>(m_buffer.data()); }
 
-  std::string m_buffer;
-  uint64_t m_frameNumber;
+    std::string m_buffer;
+    uint64_t m_frameNumber;
 };
 
 class Hasher
