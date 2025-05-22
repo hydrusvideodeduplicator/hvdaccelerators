@@ -7,8 +7,10 @@
 #include <vpdq/cpp/hashing/vpdqHashType.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <string>
+#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -71,6 +73,36 @@ public:
     uint64_t m_frameNumber;
 };
 
+/// @brief Calculate the number of threads to pass to vpdq.
+///
+/// HVD allows the user to pass in a negative number for the job count, which means "all but n" cores available
+/// on their PC. For example, if they have 8 cores, and they pass in -2 for the job count, then the hasher should
+/// use 8 - 2 = 6 threads. This function does this calculation.
+static unsigned int fix_negative_thread_count(int thread_count)
+{
+    // vpdq will determine the thread count if >=0, so just return.
+    if (thread_count >= 0) {
+        return thread_count;
+    }
+
+    auto const num_hardware_threads = std::thread::hardware_concurrency();
+
+    // Some platforms may return 0 for hardware_concurrency(), per the cpp standard.
+    // If that occurs, set it to single-threaded.
+    if (num_hardware_threads == 0) {
+        return 1;
+    }
+
+    // If we are subtracting too many, then set it to single-threaded.
+    auto const abs_thread_count = std::abs(thread_count);
+    if (abs_thread_count >= num_hardware_threads) {
+        return 1;
+    }
+
+    // Otherwise, use all but n threads.
+    return num_hardware_threads - abs_thread_count;
+}
+
 class VideoHasher
 {
 public:
@@ -78,8 +110,8 @@ public:
     {
     }
 
-    VideoHasher(float framerate, uint32_t width, uint32_t height, uint32_t thread_count)
-        : m_hasher{ thread_count, VideoMetadata{ framerate, width, height } }
+    VideoHasher(float framerate, uint32_t width, uint32_t height, int thread_count)
+        : m_hasher{ fix_negative_thread_count(thread_count), VideoMetadata{ framerate, width, height } }
     {
     }
 
