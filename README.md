@@ -1,10 +1,6 @@
 # hvdaccelerators
 
-fast stuff using fast code
-
-## TODO
-
-- [ ] Add [building wheels](https://learn.scientific-python.org/development/guides/gha-wheels/)
+Python bindings for libraries used by Hydrus Video Deduplicator.
 
 ## Credits
 
