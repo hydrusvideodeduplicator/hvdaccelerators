@@ -118,8 +118,7 @@ PYBIND11_MODULE(vpdq, m)
         .def(py::init<>())
         .def("get_hash", &vpdqFeature::get_hash)
         .def("get_frame_number", &vpdqFeature::get_frame_number)
-        .def("get_quality", &vpdqFeature::get_quality)
-        .def("get_timestamp", &vpdqFeature::get_timestamp);
+        .def("get_quality", &vpdqFeature::get_quality);
 
     m.def("hamming_distance", &hamming_distance, "Calculate the hamming distance between two PDQ hashes.");
     m.def("hash_frame", &hash_frame, "hash a frame");

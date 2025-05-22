@@ -162,7 +162,7 @@ class VpdqHasher {
    * @return If the queue is full or not.
    *
    * @note Not thread safe.
-   * 
+   *
    * @note Only applicable for multithreaded. DO NOT CALL if singlethreaded.
    **/
   bool is_queue_full();
@@ -191,10 +191,7 @@ vpdqFeature hashFrame(TFrame& frame, const VideoMetadata& video_metadata) {
         " Frame width or height smaller than the minimum hashable dimension");
   }
   return vpdqFeature{
-      pdqHash,
-      static_cast<int>(frame.get_frame_number()),
-      quality,
-      static_cast<float>(frame.get_frame_number()) / video_metadata.framerate};
+      pdqHash, static_cast<int>(frame.get_frame_number()), quality};
 }
 
 template <typename TFrame>
@@ -305,14 +302,14 @@ void VpdqHasher<TFrame>::consumer() {
 }
 
 template <typename TFrame>
-bool VpdqHasher<TFrame>::is_queue_full()
-{
-  // This doesn't have to be an exact number. We just want the 
+bool VpdqHasher<TFrame>::is_queue_full() {
+  // This doesn't have to be an exact number. We just want the
   // threads to always be working, plus a little extra in the queue
   // to avoid waiting on decoding.
   // The only reason we have a limited size queue is to avoid huge memory
-  // usage for large videos where the consumers (hashers) can't keep up with the producer (video decoder).
-  // You can assume each queue entry is about 1 Mb and adjust from there.
+  // usage for large videos where the consumers (hashers) can't keep up with the
+  // producer (video decoder). You can assume each queue entry is about 1 Mb and
+  // adjust from there.
   return m_queue.size() < (consumer_threads.size() * 2 /*a little extra*/);
 }
 

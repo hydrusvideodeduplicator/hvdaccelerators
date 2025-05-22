@@ -29,8 +29,6 @@ namespace facebook {
 namespace vpdq {
 namespace io {
 
-const int TIMESTAMP_OUTPUT_PRECISION = 3;
-
 bool loadHashesFromFileOrDie(
     const std::string& inputHashFileName,
     std::vector<hashing::vpdqFeature>& pdqHashes) {
@@ -85,9 +83,6 @@ bool outputVPDQFeatureToFile(
     outfile << s.quality;
     outfile << ",";
     outfile << s.pdqHash.format().c_str();
-    outfile << ",";
-    outfile << std::setprecision(TIMESTAMP_OUTPUT_PRECISION) << std::fixed
-            << s.timeStamp;
     outfile << "\n";
   }
   outfile.close();

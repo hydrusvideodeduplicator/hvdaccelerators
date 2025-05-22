@@ -15,7 +15,6 @@ struct vpdqFeature {
   facebook::pdq::hashing::Hash256 pdqHash;
   int frameNumber;
   int quality;
-  double timeStamp;
 
   std::string get_hash()
   {
@@ -30,11 +29,6 @@ struct vpdqFeature {
   int get_quality()
   {
       return quality;
-  }
-
-  float get_timestamp()
-  {
-      return timeStamp;
   }
 };
 
