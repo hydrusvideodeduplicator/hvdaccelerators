@@ -5,6 +5,25 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "hvdaccelerators"
 version = "0.1.0-dev.0"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "hydrusvideodeduplicator", email = "hydrusvideodeduplicator@gmail.com" },
+]
+
+[project.urls]
+Documentation = "https://github.com/hydrusvideodeduplicator/hvdaccelerators#readme"
+Issues = "https://github.com/hydrusvideodeduplicator/hvdaccelerators/issues"
+Source = "https://github.com/hydrusvideodeduplicator/hvdaccelerators"
+
+[tool.hatch.build]
+exclude = [
+  "/.*",
+  "/docs",
+  "/tests",
+]
 
 [tool.scikit-build]
 cmake.build-type = "RelWithDebInfo" # HUGE performance boost vs Debug, as expected
@@ -20,3 +39,78 @@ dependencies = [
 
 [tool.hatch.envs.test.scripts]
 all = "python -m pytest tests/test_smoketest.py --verbose {args}"
+
+# Format environment
+
+[tool.hatch.envs.format]
+skip-install = true # Don't install dedupe. We just need to format.
+dependencies = [
+  "black",
+]
+
+[tool.hatch.envs.format.scripts]
+format = "black src tests {args}"
+
+# Lint environment
+
+[tool.hatch.envs.lint]
+dependencies = [
+  "black",
+  "ruff",
+]
+
+[tool.hatch.envs.lint.scripts]
+format = "black --check src tests {args}"
+lint = "ruff check src tests {args}"
+
+[tool.black]
+target-version = ["py310", "py311", "py312", "py313"]
+line-length = 120
+skip-string-normalization = true
+
+[tool.ruff]
+# Enable the pycodestyle (`E`) and Pyflakes (`F`) rules by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+lint.select = ["E", "F"]
+lint.ignore = []
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+lint.fixable = ["ALL"]
+lint.unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "ThreatExchange",
+]
+lint.per-file-ignores = {"tests/**/*" = ["PLR2004", "S101", "TID252"]}
+
+# Same as Black.
+line-length = 120
+
+# Allow unused variables when underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.13.
+target-version = "py313"

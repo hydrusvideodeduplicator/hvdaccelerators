@@ -9,6 +9,30 @@ permissions:
   contents: read
 
 jobs:
+  linter:
+    name: Linter and Formatter
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install hatch
+      run: pip install hatch
+
+    - name: Install dependencies
+      run: pip install -e .
+
+    - name: Lint with Ruff
+      run: hatch run lint:lint
+
+    - name: Format check with black
+      run: hatch run lint:format
+
   unittest:
     name: Unit Test
     strategy:
