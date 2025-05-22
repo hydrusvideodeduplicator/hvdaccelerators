@@ -18,9 +18,6 @@ class TestSmokeTest(unittest.TestCase):
         pass
 
     def test_smoke_test(self):
-        result = vpdq.add(1, 2)
-        self.assertEqual(result, 3)
-
         result = vpdq.hamming_distance(
             "1111111111111111111111111111111111111111111111111111111111111110",
             "0000000000000000000000000000000000000000000000000000000000000000",
