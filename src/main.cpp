@@ -131,6 +131,8 @@ public:
         return m_hasher.finish();
     }
 
+    VideoHasher() = delete;
+
 private:
     VpdqHasher<StringVideoFrame> m_hasher;
     uint64_t m_frame_num{ 0U };
@@ -141,8 +143,8 @@ PYBIND11_MODULE(vpdq, m)
     m.doc() = "hvdaccelerators plugin to make stuff fast";
 
     py::class_<VideoHasher>(m, "VideoHasher")
-        .def(py::init<uint32_t, float, uint32_t, uint32_t>())
-        .def(py::init<uint32_t, float, uint32_t>())
+        .def(py::init<float, uint32_t, uint32_t>())
+        .def(py::init<float, uint32_t, uint32_t, int>())
         .def("finish", &VideoHasher::finish)
         .def("hash_frame", &VideoHasher::hash_frame);
 
