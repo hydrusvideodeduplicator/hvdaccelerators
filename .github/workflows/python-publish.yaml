@@ -21,20 +21,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python -m pip install build
+      - run: python -m pip install hatch
       - name: Build sdist
-        run: python -m build --sdist
+        run: hatch build --clean --target sdist dist
       - uses: actions/upload-artifact@v4
         with:
           name: dist-sdist
           path: dist/*.tar.gz
+          if-no-files-found: error
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-14, macos-15, windows-2022]
+        os: [ubuntu-latest, windows-latest, macos-latest] # This doesn't affect the resulting package version, so floating to latest is ok
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -59,19 +60,27 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.os }}
-          path: dist/*.whl
+          path: wheelhouse/*.whl
+          if-no-files-found: error
 
   deploy:
     needs: [build_sdist, build_wheels]
     runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/p/hvdaccelerators
     permissions:
       contents: read
       id-token: write # this permission is mandatory for Trusted Publishing
     steps:
     - name: Download packages
       uses: actions/download-artifact@v4
+      with:
+        path: dist/
+        merge-multiple: true
+
+    - name: Display downloaded packages
+      run: ls -R dist/
 
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-      with:
-        packages-dir: dist/
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
