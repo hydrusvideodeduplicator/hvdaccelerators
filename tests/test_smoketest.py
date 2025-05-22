@@ -5,7 +5,7 @@ import unittest
 from io import BytesIO
 from pathlib import Path
 
-from hvdaccelerators import stuff
+from hvdaccelerators import vpdq
 from PIL import Image
 
 log = logging.getLogger(__name__)
@@ -18,10 +18,10 @@ class TestSmokeTest(unittest.TestCase):
         pass
 
     def test_smoke_test(self):
-        result = stuff.add(1, 2)
+        result = vpdq.add(1, 2)
         self.assertEqual(result, 3)
 
-        result = stuff.hamming_distance(
+        result = vpdq.hamming_distance(
             "1111111111111111111111111111111111111111111111111111111111111110",
             "0000000000000000000000000000000000000000000000000000000000000000",
         )
@@ -33,7 +33,7 @@ class TestSmokeTest(unittest.TestCase):
             im = Image.open(BytesIO(data))
             im.thumbnail((512, 512))
             im.convert("RGB")
-            result = stuff.hash_frame(im.tobytes(), im.width, im.height)
+            result = vpdq.hash_frame(im.tobytes(), im.width, im.height)
             (pdq_hash, quality) = result
             pdq_hash = str(pdq_hash, encoding="utf-8")
             self.assertEqual(quality, 100)
@@ -57,7 +57,7 @@ class TestSmokeTest(unittest.TestCase):
 
                 log.error("Start")
                 thread_count = 0  # auto
-                hasher = stuff.Hasher(60, im.width, im.height, thread_count)
+                hasher = vpdq.VideoHasher(60, im.width, im.height, thread_count)
                 # Hash a bunch of frames, simulating a video.
                 for _ in range(100):
                     hasher.hash_frame(im.tobytes())

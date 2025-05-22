@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ version selection")  # or 11, 14, 17, 20
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ version selection")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -19,9 +19,9 @@ add_subdirectory(pdq)
 # This compiles pdq which produces the library file that will be linked below.
 add_subdirectory(vpdq)
 
-pybind11_add_module(stuff MODULE src/main.cpp)
+pybind11_add_module(vpdq MODULE src/main.cpp)
 
-target_link_libraries(stuff PUBLIC pdqlib)
-target_link_libraries(stuff PUBLIC vpdqlib)
+target_link_libraries(vpdq PUBLIC pdqlib)
+target_link_libraries(vpdq PUBLIC vpdqlib)
 
-install(TARGETS stuff DESTINATION ${SKBUILD_PROJECT_NAME})
+install(TARGETS vpdq DESTINATION ${SKBUILD_PROJECT_NAME})
