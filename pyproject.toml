@@ -29,6 +29,10 @@ exclude = [
 cmake.build-type = "RelWithDebInfo" # HUGE performance boost vs Debug, as expected
 sdist.reproducible = true
 
+# Use uv for better performance compared to pip and virtualenv
+[tool.hatch.envs.default]
+installer = "uv"
+
 # Test environment
 
 [tool.hatch.envs.test]

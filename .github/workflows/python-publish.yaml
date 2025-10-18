@@ -20,7 +20,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14"
       - run: python -m pip install hatch
       - name: Build sdist
         run: hatch build --clean --target sdist dist
@@ -45,13 +45,13 @@ jobs:
       - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: "3.13"
+          python-version: "3.14"
       - run: pip install --upgrade pip uv
 
       - name: Build wheels on ${{ matrix.os }} using cibuildwheel
-        uses: pypa/cibuildwheel@v2.23.2
+        uses: pypa/cibuildwheel@v3.2.1
         env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-*"
+          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
           CIBW_BUILD_FRONTEND: "build[uv]"
           CIBW_SKIP: "*-musllinux_*"
           CIBW_ARCHS: auto64
