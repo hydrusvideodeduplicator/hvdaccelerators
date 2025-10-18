@@ -35,6 +35,7 @@ bool matchTwoHashBrute(
     double& qMatch,
     double& tMatch,
     const bool verbose);
+
 } // namespace hashing
 } // namespace vpdq
 } // namespace facebook

@@ -4,11 +4,9 @@
 
 #include <pdq/cpp/common/pdqhashtypes.h>
 
-#include <random>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <stdexcept>
 #include <string>
 
@@ -20,16 +18,13 @@ const char hash256_format[] =
     "%04hx%04hx%04hx%04hx%04hx%04hx%04hx%04hx"
     "%04hx%04hx%04hx%04hx%04hx%04hx%04hx%04hx";
 
-std::random_device rd;
-std::mt19937 gen(rd());
-
 // ================================================================
 Hash256::Hash256(const char* hex_formatted_string) {
-  if (strlen(hex_formatted_string) != 64) {
+  if (std::strlen(hex_formatted_string) != 64) {
     throw std::runtime_error(
         "pdqhash: malformed \"" + std::string(hex_formatted_string) + "\"");
   }
-  int rv = sscanf(
+  int rv = std::sscanf(
       hex_formatted_string,
       hash256_format,
       &this->w[15],
@@ -68,8 +63,8 @@ Hash256 Hash256::fromStringOrDie(const std::string& string) {
   if (string.size() != 64) {
     // could throw; only current use is ops-tools which
     // would exit anyway.
-    fprintf(stderr, "Scan \"%s\" failed.\n", string.c_str());
-    exit(1);
+    std::fprintf(stderr, "Scan \"%s\" failed.\n", string.c_str());
+    std::exit(1);
   }
   int rv = sscanf(
       string.c_str(),
@@ -93,8 +88,8 @@ Hash256 Hash256::fromStringOrDie(const std::string& string) {
   if (rv != 16) {
     // could throw; only current use is ops-tools which
     // would exit anyway.
-    fprintf(stderr, "Scan \"%s\" failed.\n", string.c_str());
-    exit(1);
+    std::fprintf(stderr, "Scan \"%s\" failed.\n", string.c_str());
+    std::exit(1);
   }
   return h;
 }
@@ -102,7 +97,7 @@ Hash256 Hash256::fromStringOrDie(const std::string& string) {
 // ----------------------------------------------------------------
 std::string Hash256::format() const {
   Hash256Text buffer;
-  snprintf(
+  std::snprintf(
       buffer,
       HASH256_TEXT_LENGTH,
       hash256_format,
@@ -189,14 +184,67 @@ bool Hash256::operator==(const Hash256& that) const {
   return true;
 }
 
-// ----------------------------------------------------------------
-Hash256 Hash256::fuzz(int numErrorBits) {
-  Hash256 rv = *this;
-  for (int i = 0; i < numErrorBits; i++) {
-    int idx = std::uniform_int_distribution<int>(0, 255)(gen);
-    rv.flipBit(idx);
+/// @brief Create a Hash256 from a 64 char hex string.
+///
+/// @throw std::invalid_argument if the hex string is invalid.
+Hash256 Hash256::fromHexString(std::string const& str) {
+  Hash256 h;
+  if (str.size() != 64) {
+    throw std::invalid_argument("Hash string is incorrect length.");
   }
-  return rv;
+  int rv = sscanf(
+      str.c_str(),
+      hash256_format,
+      &h.w[15],
+      &h.w[14],
+      &h.w[13],
+      &h.w[12],
+      &h.w[11],
+      &h.w[10],
+      &h.w[9],
+      &h.w[8],
+      &h.w[7],
+      &h.w[6],
+      &h.w[5],
+      &h.w[4],
+      &h.w[3],
+      &h.w[2],
+      &h.w[1],
+      &h.w[0]);
+  if (rv != 16) {
+    throw std::invalid_argument("Hash256::fromStringOrDie failed.");
+  }
+  return h;
+}
+
+std::string Hash256::toHexString() const {
+  Hash256Text buffer;
+  std::snprintf(
+      buffer,
+      HASH256_TEXT_LENGTH,
+      hash256_format,
+      this->w[15],
+      this->w[14],
+      this->w[13],
+      this->w[12],
+      this->w[11],
+      this->w[10],
+      this->w[9],
+      this->w[8],
+      this->w[7],
+      this->w[6],
+      this->w[5],
+      this->w[4],
+      this->w[3],
+      this->w[2],
+      this->w[1],
+      this->w[0]);
+  return std::string{buffer};
+}
+
+bool Hash256::hammingDistanceLE(
+    Hash256 const& target, float const distance) const {
+  return static_cast<float>(hammingDistance(target)) <= distance;
 }
 
 int hammingDistance(const Hash256& hash1, const Hash256& hash2) {

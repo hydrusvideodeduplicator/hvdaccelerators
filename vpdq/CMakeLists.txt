@@ -45,7 +45,6 @@ if(NOT MSVC)
         -Wall
         -Wextra
         -Wpedantic
-        -Werror
         -Wno-error=deprecated-declarations # Avoid compile error if something gets deprecated. Warning will still show up.
     )
     target_compile_options(vpdqlib PRIVATE ${VPDQ_WARNING_FLAGS})

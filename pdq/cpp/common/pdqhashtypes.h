@@ -12,7 +12,9 @@
 #include <pdq/cpp/common/pdqbasetypes.h>
 #include <pdq/cpp/common/pdqhamming.h>
 
+#include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 
 namespace facebook {
@@ -146,12 +148,6 @@ struct Hash256 {
   std::string format() const;
   void dump() { printf("%s", this->format().c_str()); }
 
-  // Flips some number of bits randomly, with replacement.  (I.e. not all
-  // flipped bits are guaranteed to be in different positions; if you pass
-  // argument of 10 then maybe 2 bits will be flipped and flipped back, and
-  // only 6 flipped once.)
-  Hash256 fuzz(int numErrorBits);
-
   void dumpBits() {
     for (int i = HASH256_NUM_WORDS - 1; i >= 0; i--) {
       Hash16 word = this->w[i];
@@ -177,12 +173,39 @@ struct Hash256 {
     }
     printf("\n");
   }
+
+  /// @brief Create a Hash256 from a 64 char hex string.
+  ///
+  /// @throw std::invalid_argument if the hex string is invalid.
+  static Hash256 fromHexString(std::string const& str);
+
+  /// @brief Convert a Hash256 to a 64 char hex string.
+  std::string toHexString() const;
+
+  /// @brief Check if the hamming distance is less than or equal to the provided
+  /// distance.
+  bool hammingDistanceLE(Hash256 const& target, float distance) const;
+
+  static constexpr int HASH256_HEX_NUM_NYBBLES = 4 * HASH256_NUM_WORDS;
 };
 
 static_assert(sizeof(Hash256) == 32, "Hash256 should be exactly 32 bytes");
 
 int hammingDistance(const Hash256& hash1, const Hash256& hash2);
 std::string hashToString(const Hash256& hash);
+
+inline int hammingDistanceStrings(std::string const& a, std::string const& b) {
+  if (a.size() != b.size()) {
+    throw std::invalid_argument("Hash strings must be the same size.");
+  }
+
+  int distance = 0;
+  for (std::size_t i = 0; i < a.size(); ++i) {
+    distance += hammingDistance(a[i], b[i]);
+  }
+
+  return distance;
+}
 
 } // namespace hashing
 } // namespace pdq

@@ -38,7 +38,7 @@ dependencies = [
 ]
 
 [tool.hatch.envs.test.scripts]
-all = "python -m pytest tests/test_smoketest.py --verbose {args}"
+all = "python -m pytest tests/test_smoketest.py tests/test_pdq.py --verbose {args}"
 
 # Format environment
 
