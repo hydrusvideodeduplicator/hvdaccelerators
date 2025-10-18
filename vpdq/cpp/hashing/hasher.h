@@ -264,6 +264,16 @@ template <typename TFrame>
 std::vector<vpdqFeature> VpdqHasher<TFrame>::finish() {
   this->stop_hashing();
 
+  // Filter features with the same exact hash.
+  for (std::size_t i = 0; i < m_result.size(); ++i) {
+    for (std::size_t j = i + 1; j < m_result.size(); ++j) {
+      if (m_result[i].pdqHash == m_result[j].pdqHash) {
+        m_result.erase(m_result.begin() + j);
+        --j;
+      }
+    }
+  }
+
   // Sort out of order frames by frame number
   std::sort(
       std::begin(m_result),

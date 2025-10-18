@@ -195,12 +195,12 @@ int hammingDistance(const Hash256& hash1, const Hash256& hash2);
 std::string hashToString(const Hash256& hash);
 
 inline int hammingDistanceStrings(std::string const& a, std::string const& b) {
-  if (a.size() != b.size()) {
-    throw std::invalid_argument("Hash strings must be the same size.");
+  if ((a.size() < 64U) || (b.size() < 64U)) {
+    throw std::runtime_error{"PDQ hash size is too small"};
   }
 
   int distance = 0;
-  for (std::size_t i = 0; i < a.size(); ++i) {
+  for (std::size_t i = 0; i < 64U; ++i) {
     distance += hammingDistance(a[i], b[i]);
   }
 

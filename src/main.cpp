@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <thread>
@@ -21,7 +22,7 @@ int hamming_distance(std::string const& a, std::string const& b)
     return facebook::pdq::hashing::hammingDistanceStrings(a, b);
 }
 
-std::tuple<py::bytes, int> hash_frame(py::bytes& img, size_t width, size_t height)
+std::tuple<py::bytes, int> hash_frame(py::bytes& img, std::size_t width, std::size_t height)
 {
     auto hasher = facebook::vpdq::hashing::FrameBufferHasherFactory::createFrameHasher(width, height);
     facebook::pdq::hashing::Hash256 result{};
@@ -250,9 +251,9 @@ PYBIND11_MODULE(vpdq, m)
 
     py::class_<facebook::vpdq::hashing::vpdqFeature>(m, "vpdqFeature")
         .def(py::init<>())
-        .def_readonly("pdq_hash", &vpdqFeature::pdqHash)
+        .def_readonly("pdqHash", &vpdqFeature::pdqHash)
         .def_readonly("quality", &vpdqFeature::quality)
-        .def_readonly("frame_number", &vpdqFeature::frameNumber)
+        .def_readonly("frameNumber", &vpdqFeature::frameNumber)
         .def("from_str", &vpdqFeature::from_str)
         .def("to_string", &vpdqFeature::to_string)
         .def("is_valid", &vpdqFeature::is_valid)
