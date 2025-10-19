@@ -55,7 +55,6 @@ bool PDQFrameBufferHasher::hashFrame(
 
 int FrameBufferHasherFactory::getFrameHasherDownscaleDimension() {
   return PDQFrameBufferHasher::getFrameDownscaleDimension();
-  ;
 }
 
 // ----------------------------------------------------------------

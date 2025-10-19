@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import unittest
+import binascii
 
 from hvdaccelerators import vpdq
 
@@ -38,15 +39,22 @@ class TestPdq(unittest.TestCase):
 
     def test_badHexString(self):
         bad_hex_strings = [
-            "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff1631",  # too long by 1 char
-            "09c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff1631",  # too long by 2 chars
             "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff16",  # too short by 1 char
-            "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff16",  # too short by 2 chars
+            "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff1",  # too short by 2 chars
             "",  # empty
         ]
         for hex_str in bad_hex_strings:
             with self.assertRaises(ValueError):
                 vpdq.PdqHash256.fromHexString(hex_str)
+
+        too_long_hex_str = [
+            "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff1631",  # too long by 1 char
+            "09c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff1631",  # too long by 2 chars
+        ]
+        for hex_str in too_long_hex_str:
+            # If too long, exception should not be raised. This is checked automatically by pytest.
+            pdq_hash = vpdq.PdqHash256.fromHexString(hex_str)
+            self.assertEqual(str(pdq_hash), hex_str[:64])
 
     def test___str__(self):
         hex_str = PDQ_HASH
@@ -64,6 +72,32 @@ class TestPdq(unittest.TestCase):
             PDQ_HASH, "7981a3ca8eb538e3e3f2862dcc9a71a6a389ec32a2619bc6683cf663c9c45f83"
         )
         self.assertEqual(actual, expected)
+
+    def test_string_conversion_round_trip(self):
+        vpdqHexString = (
+            PDQ_HASH + PDQ_HASH + "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff163" + PDQ_HASH
+        )
+        vpdqHash = vpdq.VpdqHash.from_string(vpdqHexString)
+        self.assertEqual(str(vpdqHash), vpdqHexString)
+
+    def test_to_bytes(self):
+        vpdqHexString = "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff163"
+        vpdqHash = vpdq.VpdqHash.from_string(vpdqHexString)
+        self.assertEqual(type(vpdqHash.bytes), bytes)
+        self.assertEqual(vpdqHexString, binascii.hexlify(vpdqHash.bytes).decode())
+
+    def test_from_bytes(self):
+        # Single frame
+        vpdqHexString = "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff163"
+        vpdqHash = vpdq.VpdqHash.from_bytes(binascii.unhexlify(vpdqHexString))
+        self.assertEqual(vpdqHash, vpdq.VpdqHash.from_string(vpdqHexString))
+
+        # Multiple frames
+        vpdqHexString = (
+            PDQ_HASH + PDQ_HASH + "9c151c3af838278e3ef57c180c7d031c07aefd12f2ccc1e18f2a1e1c7d0ff163" + PDQ_HASH
+        )
+        vpdqHash = vpdq.VpdqHash.from_bytes(binascii.unhexlify(vpdqHexString))
+        self.assertEqual(str(vpdqHash), vpdqHexString)
 
 
 if __name__ == "__main__":

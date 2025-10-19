@@ -11,8 +11,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace py = pybind11;
@@ -35,6 +37,7 @@ std::tuple<py::bytes, int> hash_frame(py::bytes& img, std::size_t width, std::si
 using facebook::vpdq::hashing::GenericFrame;
 using facebook::vpdq::hashing::VideoMetadata;
 using facebook::vpdq::hashing::vpdqFeature;
+using facebook::vpdq::hashing::VpdqHash;
 using facebook::vpdq::hashing::VpdqHasher;
 
 /** @brief String class for video frames. Stores pixels in its buffer which are
@@ -48,13 +51,13 @@ public:
      *  @param buffer The pixel buffer used for PDQ hashing
      *  @param frameNumber The frame number in the video.
      **/
-    StringVideoFrame(std::string buffer, uint64_t frameNumber) : m_buffer(std::move(buffer)), m_frameNumber(frameNumber) {};
+    StringVideoFrame(std::string buffer, std::uint64_t frameNumber) : m_buffer(std::move(buffer)), m_frameNumber(frameNumber) {};
 
     /** @brief Get the frame number.
      *
      *  @return The frame number.
      **/
-    uint64_t get_frame_number() const
+    std::uint64_t get_frame_number() const
     {
         return m_frameNumber;
     }
@@ -69,7 +72,7 @@ public:
     }
 
     std::string m_buffer;
-    uint64_t m_frameNumber;
+    std::uint64_t m_frameNumber;
 };
 
 /// @brief Calculate the number of threads to pass to vpdq.
@@ -105,11 +108,11 @@ static unsigned int fix_negative_thread_count(int thread_count)
 class VideoHasher
 {
 public:
-    VideoHasher(float framerate, uint32_t width, uint32_t height) : VideoHasher{ framerate, width, height, 0 }
+    VideoHasher(float framerate, std::uint32_t width, std::uint32_t height) : VideoHasher{ framerate, width, height, 0 }
     {
     }
 
-    VideoHasher(float framerate, uint32_t width, uint32_t height, int thread_count)
+    VideoHasher(float framerate, std::uint32_t width, std::uint32_t height, int thread_count)
         : m_hasher{ fix_negative_thread_count(thread_count), VideoMetadata{ framerate, width, height } }
     {
     }
@@ -125,7 +128,7 @@ public:
         m_hasher.push_back(make_frame());
     }
 
-    std::vector<vpdqFeature> finish()
+    facebook::vpdq::hashing::VpdqHash finish()
     {
         return m_hasher.finish();
     }
@@ -134,41 +137,11 @@ public:
 
 private:
     VpdqHasher<StringVideoFrame> m_hasher;
-    uint64_t m_frame_num{ 0U };
+    std::uint64_t m_frame_num{ 0U };
 };
 
 namespace hvdaccelerators
 {
-
-int matchHash(const std::vector<facebook::vpdq::hashing::vpdqFeature>& qHashes,
-              const std::vector<facebook::vpdq::hashing::vpdqFeature>& tHashes, const int distanceTolerance, const int qualityTolerance);
-
-/**
- * @brief Filter low quality hashes from a feature vector
- *
- * @param features Features to filter
- * @param qualityTolerance Quality tolerance of comparing two hashes. If lower
- * then it won't be included in the result
- * @param verbose Print skipped hashes
- *
- * @return Feature vector without features with quality lower than
- * qualityTolerance
- */
-static std::vector<facebook::vpdq::hashing::vpdqFeature> filterFeatures(const std::vector<facebook::vpdq::hashing::vpdqFeature>& features,
-                                                                        const int qualityTolerance, const bool verbose)
-{
-    std::vector<facebook::vpdq::hashing::vpdqFeature> filteredHashes;
-    for (const auto& feature : features) {
-        if (feature.quality >= qualityTolerance) {
-            filteredHashes.push_back(feature);
-        } else if (verbose) {
-            auto index = &feature - &features[0];
-            std::cout << "Skipping Line " << index << " Skipping Hash: " << feature.pdqHash.format()
-                      << ", because of low quality: " << feature.quality << std::endl;
-        }
-    }
-    return filteredHashes;
-}
 
 /**
  * @brief Get the number of matches between two feature vectors
@@ -177,23 +150,23 @@ static std::vector<facebook::vpdq::hashing::vpdqFeature> filterFeatures(const st
  * @param features2 Features to match
  * @param distanceTolerance Distance tolerance of considering a match. Lower is
  * more similar.
- * @param verbose Print features with matching hashes
  *
  * @return Number of matches
  */
-static std::vector<facebook::vpdq::hashing::vpdqFeature>::size_type
-findMatches(const std::vector<facebook::vpdq::hashing::vpdqFeature>& features1,
-            const std::vector<facebook::vpdq::hashing::vpdqFeature>& features2, const int distanceTolerance, const bool verbose)
+static std::uint32_t findMatches(const std::string_view features1, const std::string_view features2, const int distanceTolerance)
 {
-    unsigned int matchCnt = 0;
-    for (const auto& feature1 : features1) {
-        for (const auto& feature2 : features2) {
-            if (feature1.pdqHash.hammingDistance(feature2.pdqHash) < distanceTolerance) {
-                matchCnt++;
-                if (verbose) {
-                    std::cout << "Query Hash: " << feature1.pdqHash.format() << " Target Hash: " << feature2.pdqHash.format() << " match "
-                              << std::endl;
-                }
+    // Check for out of bounds.
+    if (((features1.size() % VpdqHash::bytesPerPdqHash) != 0U) || ((features2.size() % VpdqHash::bytesPerPdqHash) != 0U)) {
+        return 0;
+    }
+
+    std::uint32_t matchCnt = 0;
+    for (std::size_t i = 0; i < features1.size(); i += VpdqHash::bytesPerPdqHash) {
+        const char* const pdqHash1 = features1.data() + i;
+        for (std::size_t j = 0; j < features2.size(); j += VpdqHash::bytesPerPdqHash) {
+            const char* const pdqHash2 = features2.data() + j;
+            if (facebook::pdq::hashing::hammingDistanceSpan(pdqHash1, pdqHash2) < distanceTolerance) {
+                ++matchCnt;
                 break;
             }
         }
@@ -201,67 +174,67 @@ findMatches(const std::vector<facebook::vpdq::hashing::vpdqFeature>& features1,
     return matchCnt;
 }
 
-int matchHash(const std::vector<facebook::vpdq::hashing::vpdqFeature>& qHashes,
-              const std::vector<facebook::vpdq::hashing::vpdqFeature>& tHashes, const int distanceTolerance, const int qualityTolerance)
+int matchHash(const std::string_view qHashes, const std::string_view tHashes, const int distanceTolerance)
 {
-    // Filter low quality hashes
-    auto queryFiltered  = filterFeatures(qHashes, qualityTolerance, false);
-    auto targetFiltered = filterFeatures(tHashes, qualityTolerance, false);
-
-    // Avoid divide-by-zero
-    if (queryFiltered.empty() || targetFiltered.empty()) {
+    // Avoid divide-by-zero. Also if a video had all hashes filtered out because there were too low quality
+    // then the hashes may be empty.
+    if (qHashes.empty() || tHashes.empty()) {
         return 0.0;
     }
 
     // Get count of query in target and target in query
-    auto qMatchCnt = findMatches(queryFiltered, targetFiltered, distanceTolerance, false);
+    auto qMatchCnt = findMatches(qHashes, tHashes, distanceTolerance);
 
-    return (qMatchCnt * 100.0) / queryFiltered.size();
+    return (qMatchCnt * 100.0) / (qHashes.size() / facebook::vpdq::hashing::VpdqHash::bytesPerPdqHash);
 }
 
-int matchHashPybind(const py::list& qHashes, const py::list& tHashes, const int distanceTolerance, const int qualityTolerance)
+int matchHashBytes(const py::bytes& qHashes, const py::bytes& tHashes, const int distanceTolerance)
 {
-    // TODO: Iterate over py::list directly. Don't copy this.
-    std::vector<facebook::vpdq::hashing::vpdqFeature> qHashesV;
-    qHashesV.reserve(qHashes.size());
-    for (const auto& item : qHashes) {
-        qHashesV.push_back(item.cast<facebook::vpdq::hashing::vpdqFeature>());
-    }
+    return matchHash(std::string_view{ qHashes }, std::string_view{ tHashes }, distanceTolerance);
+}
 
-    std::vector<facebook::vpdq::hashing::vpdqFeature> tHashesV;
-    tHashesV.reserve(tHashes.size());
-    for (const auto& item : tHashes) {
-        tHashesV.push_back(item.cast<facebook::vpdq::hashing::vpdqFeature>());
-    }
-
-    return matchHash(qHashesV, tHashesV, distanceTolerance, qualityTolerance);
+int matchHashVpdqHash(const facebook::vpdq::hashing::VpdqHash& qHashes, const facebook::vpdq::hashing::VpdqHash& tHashes,
+                      const int distanceTolerance)
+{
+    return matchHash(std::string_view{ qHashes.pdqHashes }, std::string_view{ tHashes.pdqHashes }, distanceTolerance);
 }
 
 } // namespace hvdaccelerators
 
 PYBIND11_MODULE(vpdq, m)
 {
-    m.doc() = "hvdaccelerators plugin to make stuff fast";
+    m.doc() = "hvdaccelerators contains C++ implementations of Hydrus Video Deduplicator algorithms to improve performance.";
 
     py::class_<VideoHasher>(m, "VideoHasher")
-        .def(py::init<float, uint32_t, uint32_t>())
-        .def(py::init<float, uint32_t, uint32_t, int>())
+        .def(py::init<float, std::uint32_t, std::uint32_t>())
+        .def(py::init<float, std::uint32_t, std::uint32_t, int>())
         .def("finish", &VideoHasher::finish)
         .def("hash_frame", &VideoHasher::hash_frame);
 
     py::class_<facebook::vpdq::hashing::vpdqFeature>(m, "vpdqFeature")
         .def(py::init<>())
         .def_readonly("pdqHash", &vpdqFeature::pdqHash)
-        .def_readonly("quality", &vpdqFeature::quality)
-        .def_readonly("frameNumber", &vpdqFeature::frameNumber)
         .def("from_str", &vpdqFeature::from_str)
         .def("to_string", &vpdqFeature::to_string)
-        .def("is_valid", &vpdqFeature::is_valid)
         .def("get_hash", &vpdqFeature::get_hash)
-        .def("get_frame_number", &vpdqFeature::get_frame_number)
-        .def("get_quality", &vpdqFeature::get_quality)
         .def("__str__", &vpdqFeature::to_string)
         .def("__repr__", &vpdqFeature::to_string);
+
+    py::class_<facebook::vpdq::hashing::VpdqHash>(m, "VpdqHash")
+        .def(py::init<>())
+        .def_readonly("pdqHashes", &facebook::vpdq::hashing::VpdqHash::pdqHashes)
+        .def("__str__", &facebook::vpdq::hashing::VpdqHash::to_string)
+        .def("__repr__", &facebook::vpdq::hashing::VpdqHash::to_string)
+        .def("__len__", &facebook::vpdq::hashing::VpdqHash::getHashCount)
+        .def("__eq__", &facebook::vpdq::hashing::VpdqHash::operator==)
+        .def("__ne__", &facebook::vpdq::hashing::VpdqHash::operator!=)
+        .def("from_bytes", &facebook::vpdq::hashing::VpdqHash::from_bytes)
+        .def_property(
+            "bytes", [](const facebook::vpdq::hashing::VpdqHash& s) -> py::bytes { return py::bytes(s.pdqHashes); },
+            [](facebook::vpdq::hashing::VpdqHash& s, py::bytes b) { s.pdqHashes = b.cast<std::string>(); })
+        .def("from_string", &facebook::vpdq::hashing::VpdqHash::from_string)
+        .def("empty", &facebook::vpdq::hashing::VpdqHash::empty)
+        .def_readonly_static("bytesPerPdqHash", &facebook::vpdq::hashing::VpdqHash::bytesPerPdqHash);
 
     py::class_<facebook::pdq::hashing::Hash256>(m, "PdqHash256")
         .def(py::init<>())
@@ -272,7 +245,8 @@ PYBIND11_MODULE(vpdq, m)
         .def("__repr__", &facebook::pdq::hashing::Hash256::toHexString)
         .def_readonly_static("HASH256_HEX_NUM_NYBBLES", &facebook::pdq::hashing::Hash256::HASH256_HEX_NUM_NYBBLES);
 
-    m.def("matchHash", &hvdaccelerators::matchHashPybind, "TODO");
+    m.def("matchHashBytes", &hvdaccelerators::matchHashBytes, "Calculate the similarity between two VPDQ hashes (raw bytes).");
+    m.def("matchHash", &hvdaccelerators::matchHashVpdqHash, "Calculate the similarity between two VPDQ hashes.");
     m.def("hamming_distance", &hamming_distance, "Calculate the hamming distance between two PDQ hashes.");
     m.def("hammingDistanceStrings", &facebook::pdq::hashing::hammingDistanceStrings,
           "Calculate the hamming distance between two PDQ hashes.");

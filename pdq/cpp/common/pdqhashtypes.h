@@ -216,6 +216,7 @@ constexpr void decodeHexToBytes(
   }
 }
 
+// Hamming distance of the hex strings.
 inline int hammingDistanceStrings(std::string const& a, std::string const& b) {
   if ((a.size() < 64U) || (b.size() < 64U)) {
     throw std::runtime_error{"PDQ hash size is too small"};
@@ -229,6 +230,28 @@ inline int hammingDistanceStrings(std::string const& a, std::string const& b) {
 
   decodeHexToBytes(a.data(), a_bytes, 64);
   decodeHexToBytes(b.data(), b_bytes, 64);
+
+  auto a_bits_64 = reinterpret_cast<const std::uint64_t*>(a_bytes);
+  auto b_bits_64 = reinterpret_cast<const std::uint64_t*>(b_bytes);
+
+  int dist = 0;
+  for (int i = 0; i < 4; ++i) {
+    dist += hammingDistance64(a_bits_64[i], b_bits_64[i]);
+  }
+  return dist;
+}
+
+// Hamming distance of the raw byte strings (NOT HEX).
+inline int hammingDistanceSpan(const char* a, const char* b) {
+  // We copy the strings to a local buffer that is guaranteed to be aligned so
+  // that we can calculate the hamming distance 8 bytes at a time. This is
+  // optimal for aligned access and the popcnt x86 instruction.
+  alignas(sizeof(std::uint64_t)) std::uint8_t a_bytes[32];
+  alignas(sizeof(std::uint64_t)) std::uint8_t b_bytes[32];
+  for (int i = 0; i < 32; ++i) {
+    a_bytes[i] = a[i];
+    b_bytes[i] = b[i];
+  }
 
   auto a_bits_64 = reinterpret_cast<const std::uint64_t*>(a_bytes);
   auto b_bits_64 = reinterpret_cast<const std::uint64_t*>(b_bytes);

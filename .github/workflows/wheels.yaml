@@ -18,9 +18,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
-      - run: python -m pip install build
+      - run: |
+          pip install uv --upgrade
+          uv venv
+          uv pip install hatch
       - name: Build sdist
-        run: python -m build --sdist
+        run: uv run hatch build --clean --target sdist dist
       - uses: actions/upload-artifact@v4
         with:
           name: dist-sdist
@@ -42,7 +45,7 @@ jobs:
         name: Install Python
         with:
           python-version: "3.14"
-      - run: pip install --upgrade pip uv
+      - run: pip install uv --upgrade
 
       - name: Build wheels on ${{ matrix.os }} using cibuildwheel
         uses: pypa/cibuildwheel@v3.2.1

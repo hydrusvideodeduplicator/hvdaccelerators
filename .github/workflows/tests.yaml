@@ -21,17 +21,18 @@ jobs:
       with:
         python-version: '3.14'
 
-    - name: Install hatch
-      run: pip install hatch
-
     - name: Install dependencies
-      run: pip install -e .
+      run: | 
+        pip install uv
+        uv venv
+        uv pip install hatch
+        uv pip install -e .
 
     - name: Lint with Ruff
-      run: hatch run lint:lint
+      run: uv run hatch run lint:lint
 
     - name: Format check with black
-      run: hatch run lint:format
+      run: uv run hatch run lint:format
 
   unittest:
     name: Unit Test
@@ -55,9 +56,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install hatch
+        pip install uv
+        uv venv
+        uv pip install hatch
 
     - name: Unit test
-      run: |
-        hatch run test:all
+      run: uv run hatch run test:all

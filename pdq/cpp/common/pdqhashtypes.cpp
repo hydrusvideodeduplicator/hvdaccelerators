@@ -186,10 +186,12 @@ bool Hash256::operator==(const Hash256& that) const {
 
 /// @brief Create a Hash256 from a 64 char hex string.
 ///
-/// @throw std::invalid_argument if the hex string is invalid.
+/// @note Any characters past the first 64 will be silently ignored.
+///
+/// @throw std::invalid_argument if the hex string is invalid (too short).
 Hash256 Hash256::fromHexString(std::string const& str) {
   Hash256 h;
-  if (str.size() != 64) {
+  if (str.size() < 64) {
     throw std::invalid_argument("Hash string is incorrect length.");
   }
   int rv = sscanf(

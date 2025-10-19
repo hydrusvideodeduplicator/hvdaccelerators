@@ -9,6 +9,7 @@
 #include <atomic>
 #include <cmath>
 #include <condition_variable>
+#include <cstdint>
 #include <cstdio>
 #include <fstream>
 #include <functional>
@@ -95,7 +96,7 @@ class VpdqHasher {
    *
    * @note Not thread safe.
    **/
-  std::vector<vpdqFeature> finish();
+  VpdqHash finish();
 
   VpdqHasher() = delete;
   VpdqHasher(VpdqHasher const&) = delete;
@@ -261,7 +262,7 @@ void VpdqHasher<TFrame>::stop_hashing() {
 }
 
 template <typename TFrame>
-std::vector<vpdqFeature> VpdqHasher<TFrame>::finish() {
+VpdqHash VpdqHasher<TFrame>::finish() {
   this->stop_hashing();
 
   // Filter features with the same exact hash.
@@ -282,13 +283,27 @@ std::vector<vpdqFeature> VpdqHasher<TFrame>::finish() {
         return a.frameNumber < b.frameNumber;
       });
 
-  return m_result;
+  // Store the raw bytes of the PDQ hashes into the vpdqHash.
+  VpdqHash vpdqHash{};
+
+  vpdqHash.pdqHashes.reserve(VpdqHash::bytesPerPdqHash * m_result.size());
+  for (auto const& feature : m_result) {
+    // Note: Unlike the reference VPDQ implementation (I think), these hashes
+    // are host-machine endian dependent because the PDQ hash buffer is an array
+    // of uint16, not an array of bytes. But most CPUs are little-endian
+    // nowadays so this isn't really of concern.
+    vpdqHash.pdqHashes.append(
+        reinterpret_cast<const char*>(feature.pdqHash.w),
+        sizeof(feature.pdqHash.w));
+  }
+  return vpdqHash;
 }
 
 template <typename TFrame>
 void VpdqHasher<TFrame>::hasher(TFrame& frame) {
   auto hashedFrame = hashFrame(frame, m_video_metadata);
-  {
+  static constexpr int min_quality = 50;
+  if (hashedFrame.quality >= min_quality) {
     std::lock_guard<std::mutex> lock(m_result_mutex);
     m_result.push_back(std::move(hashedFrame));
   }

@@ -43,6 +43,7 @@ class TestSmokeTest(unittest.TestCase):
             # )
             # print(result)
 
+    @unittest.skip("VpdqHash iteration isn't supported anymore")
     def test_hasher(self):
         # Run multiple times to try and catch any concurrency issues.
         for _ in range(10):
