@@ -274,5 +274,7 @@ PYBIND11_MODULE(vpdq, m)
 
     m.def("matchHash", &hvdaccelerators::matchHashPybind, "TODO");
     m.def("hamming_distance", &hamming_distance, "Calculate the hamming distance between two PDQ hashes.");
+    m.def("hammingDistanceStrings", &facebook::pdq::hashing::hammingDistanceStrings,
+          "Calculate the hamming distance between two PDQ hashes.");
     m.def("hash_frame", &hash_frame, "hash a frame");
 }

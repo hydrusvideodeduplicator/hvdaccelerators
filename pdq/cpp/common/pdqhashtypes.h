@@ -194,17 +194,50 @@ static_assert(sizeof(Hash256) == 32, "Hash256 should be exactly 32 bytes");
 int hammingDistance(const Hash256& hash1, const Hash256& hash2);
 std::string hashToString(const Hash256& hash);
 
+constexpr std::uint8_t hexDigitToValue(char c) {
+  if (c >= '0' && c <= '9') {
+    return c - '0';
+  }
+  if (c >= 'a' && c <= 'f') {
+    return c - 'a' + 10;
+  }
+  if (c >= 'A' && c <= 'F') {
+    return c - 'A' + 10;
+  }
+  throw std::invalid_argument("Invalid hex digit");
+}
+
+constexpr void decodeHexToBytes(
+    const char* hex, std::uint8_t* out, std::size_t len) {
+  for (std::size_t i = 0; i < len; i += 2) {
+    std::uint8_t hi = hexDigitToValue(hex[i]);
+    std::uint8_t lo = hexDigitToValue(hex[i + 1]);
+    out[i / 2] = (hi << 4) | lo;
+  }
+}
+
 inline int hammingDistanceStrings(std::string const& a, std::string const& b) {
   if ((a.size() < 64U) || (b.size() < 64U)) {
     throw std::runtime_error{"PDQ hash size is too small"};
   }
 
-  int distance = 0;
-  for (std::size_t i = 0; i < 64U; ++i) {
-    distance += hammingDistance(a[i], b[i]);
-  }
+  // We copy the strings to a local buffer that is guaranteed to be aligned so
+  // that we can calculate the hamming distance 8 bytes at a time. This is
+  // optimal for aligned access and the popcnt x86 instruction.
+  alignas(8) std::uint8_t a_bytes[32];
+  alignas(8) std::uint8_t b_bytes[32];
 
-  return distance;
+  decodeHexToBytes(a.data(), a_bytes, 64);
+  decodeHexToBytes(b.data(), b_bytes, 64);
+
+  auto a_bits_64 = reinterpret_cast<const std::uint64_t*>(a_bytes);
+  auto b_bits_64 = reinterpret_cast<const std::uint64_t*>(b_bytes);
+
+  int dist = 0;
+  for (int i = 0; i < 4; ++i) {
+    dist += hammingDistance64(a_bits_64[i], b_bits_64[i]);
+  }
+  return dist;
 }
 
 } // namespace hashing
