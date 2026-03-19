@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.14"
       - run: |
@@ -24,7 +24,7 @@ jobs:
           uv pip install hatch
       - name: Build sdist
         run: uv run hatch build --clean --target sdist dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-sdist
           path: dist/*.tar.gz
@@ -34,29 +34,29 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-14, macos-15, windows-2022]
+        os: [ubuntu-latest, windows-latest, macos-latest] # This doesn't affect the resulting package version, so floating to latest is ok
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         name: Install Python
         with:
           python-version: "3.14"
       - run: pip install uv --upgrade
 
       - name: Build wheels on ${{ matrix.os }} using cibuildwheel
-        uses: pypa/cibuildwheel@v3.2.1
+        uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
-          CIBW_BUILD_FRONTEND: "build[uv]"
           CIBW_SKIP: "*-musllinux_*"
           CIBW_ARCHS: auto64
 
       - name: Upload ${{ matrix.os }} wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.os }}
           path: wheelhouse/*.whl
+          if-no-files-found: error
