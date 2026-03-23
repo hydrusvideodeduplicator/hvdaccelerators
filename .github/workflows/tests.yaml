@@ -30,12 +30,22 @@ jobs:
         uv venv
         uv pip install hatch
         uv pip install .
+        uv pip install pybind11-stubgen
 
     - name: Lint with Ruff
       run: uv run hatch run lint:lint
 
     - name: Format check with black
       run: uv run hatch run lint:format
+
+    - name: Check stubs
+      run: |
+        uv run pybind11-stubgen hvdaccelerators.vpdq -o src/
+        if ! git diff --exit-code src/hvdaccelerators/vpdq.pyi; then
+          echo "Stubs are out of date. Regenerate with "hatch run stubs:gen" and commit the result."
+          exit 1
+        fi
+        uv run hatch run stubs:check
 
   unittest:
     name: Unit Test

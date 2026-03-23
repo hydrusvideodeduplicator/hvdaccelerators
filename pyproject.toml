@@ -1,5 +1,8 @@
 [build-system]
-requires = ["scikit-build-core", "pybind11"]
+requires = [
+  "scikit-build-core",
+  "pybind11",
+]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -28,12 +31,24 @@ exclude = [
 [tool.scikit-build]
 cmake.build-type = "RelWithDebInfo" # HUGE performance boost vs Debug, as expected
 sdist.reproducible = true
+sdist.exclude = ["tests", ".devcontainer", ".github", ".vscode", "docs"] # Exclude directories to reduce sdist size
 
 [tool.hatch.envs.default]
 installer = "uv" # Use uv for better performance compared to pip and virtualenv
 
 [tool.cibuildwheel]
 build-frontend = "build[uv]" # Use uv for better performance compared to pip and virtualenv
+
+# Stubs environment
+
+[tool.hatch.envs.stubs]
+dependencies = [
+  "pybind11-stubgen",
+]
+
+[tool.hatch.envs.stubs.scripts]
+gen = "pybind11-stubgen hvdaccelerators.vpdq -o src --exit-code {args}"
+check = "pybind11-stubgen hvdaccelerators.vpdq --dry-run --exit-code {args}"
 
 # Test environment
 
@@ -103,6 +118,7 @@ exclude = [
     "node_modules",
     "venv",
     "ThreatExchange",
+    "*.pyi",
 ]
 lint.per-file-ignores = {"tests/**/*" = ["PLR2004", "S101", "TID252"]}
 

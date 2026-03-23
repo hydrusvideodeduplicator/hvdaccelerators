@@ -205,6 +205,12 @@ PYBIND11_MODULE(vpdq, m)
 {
     m.doc() = "hvdaccelerators contains C++ implementations of Hydrus Video Deduplicator algorithms to improve performance.";
 
+    // Expose the types here to improve pybind11 Python stub generation.
+    // If this is removed there will be a warning about it.
+    // See https://pybind11.readthedocs.io/en/latest/advanced/misc.html#avoiding-cpp-types-in-docstrings
+    auto vpdqHash = py::class_<facebook::vpdq::hashing::VpdqHash>(m, "VpdqHash");
+    auto pdqHash = py::class_<facebook::pdq::hashing::Hash256>(m, "PdqHash256");
+
     py::class_<VideoHasher>(m, "VideoHasher")
         .def(py::init<float, std::uint32_t, std::uint32_t>())
         .def(py::init<float, std::uint32_t, std::uint32_t, int>())
@@ -220,8 +226,7 @@ PYBIND11_MODULE(vpdq, m)
         .def("__str__", &vpdqFeature::to_string)
         .def("__repr__", &vpdqFeature::to_string);
 
-    py::class_<facebook::vpdq::hashing::VpdqHash>(m, "VpdqHash")
-        .def(py::init<>())
+    vpdqHash.def(py::init<>())
         .def_readonly("pdqHashes", &facebook::vpdq::hashing::VpdqHash::pdqHashes)
         .def("__str__", &facebook::vpdq::hashing::VpdqHash::to_string)
         .def("__repr__", &facebook::vpdq::hashing::VpdqHash::to_string)
@@ -236,7 +241,7 @@ PYBIND11_MODULE(vpdq, m)
         .def("empty", &facebook::vpdq::hashing::VpdqHash::empty)
         .def_readonly_static("bytesPerPdqHash", &facebook::vpdq::hashing::VpdqHash::bytesPerPdqHash);
 
-    py::class_<facebook::pdq::hashing::Hash256>(m, "PdqHash256")
+    pdqHash
         .def(py::init<>())
         .def("fromHexString", &facebook::pdq::hashing::Hash256::fromHexString)
         .def("toHexString", &facebook::pdq::hashing::Hash256::toHexString)
